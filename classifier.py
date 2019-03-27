@@ -1,6 +1,7 @@
 import random
 from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer
 from sklearn.linear_model import SGDClassifier
+from sklearn.svm import *
 from sklearn.pipeline import Pipeline
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.cluster import KMeans
@@ -116,9 +117,9 @@ class DecisionTree(Classifier):
         self.clf.fit(data, labels)
 
 
-class SVM(Classifier):
+class SGD(Classifier):
 
-    name = "SVM"
+    name = "SGD"
 
     def __init__(self, training_set, feature):
         data = []
@@ -138,3 +139,42 @@ class SVM(Classifier):
 
         self.clf.fit(data, labels)
 
+class Linear_SVM(Classifier):
+
+    name = "Linear SVM"
+
+    def __init__(self, training_set, feature):
+        data = []
+        labels = []
+        self.feature = feature
+        for record in training_set:
+            data.append(getattr(record, feature))
+            labels.append(int(record.category))
+
+        self.clf = Pipeline([
+            ('vect', CountVectorizer(lowercase=True, ngram_range=(1, 2))),
+            ('tfidf', TfidfTransformer()),
+            ('clf', LinearSVC()),
+        ])
+
+        self.clf.fit(data, labels)
+
+class SciKit_SVC(Classifier):
+
+    name = "SciKit SVC"
+
+    def __init__(self, training_set, feature):
+        data = []
+        labels = []
+        self.feature = feature
+        for record in training_set:
+            data.append(getattr(record, feature))
+            labels.append(int(record.category))
+
+        self.clf = Pipeline([
+            ('vect', CountVectorizer(lowercase=True, ngram_range=(1, 2))),
+            ('tfidf', TfidfTransformer()),
+            ('clf', SVC()),
+        ])
+
+        self.clf.fit(data, labels)

@@ -50,11 +50,22 @@ if __name__ == "__main__":
 
     classifiers = [classifier.Linear_SVM, classifier.Classifier, classifier.Random_Forest, classifier.SGD, classifier.DecisionTree]
     sets = [tweets_obama, tweets_romney]
-    features = ["text"] #, "hashtags", "callout", "links", "bigrams"]
+    features = ["text", "hashtags", "callout", "links", "bigrams"]
+    results = []
 
     for classifier in classifiers:
         for set in sets:
+            if set is tweets_obama:
+                set_name = "obama"
+            else:
+                set_name = "romney"
+
             for feature in features:
                 tester = Classifier_Tester(set, 10, classifier, feature)
-                accuracy = tester.run_test()
-                print(getattr(classifier, "name") + " " + feature + " " + accuracy.__str__())
+                a, p, r, f = tester.run_test()
+
+                s = getattr(classifier, "name") + ", " + set_name + ", " + feature + ", " + str(a) + ", "
+                for i in [0, 1, 2]:
+                    s += (str(p[i]) + ", " + str(r[i]) + ", " + str(f[i]) + ", ")
+
+                print(s)

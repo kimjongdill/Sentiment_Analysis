@@ -11,7 +11,7 @@ class Tweet:
              return u""
         return var
 
-    def __init__(self, line, parser):
+    def __init__(self, line, parser, pos_words, neg_words):
         # print(line)
         self.text = self.type_check(line['text'])
         self.date = self.type_check(line['date'])
@@ -49,18 +49,34 @@ class Tweet:
         self.text = self.text.replace("@", "")
         self.text = self.text.replace("#", "")
 
-        self.bigrams = self.extract_relevant_bigrams(parser)
+        self.count_opinion_words(parser, pos_words, neg_words)
+        #self.bigrams = self.extract_relevant_bigrams(parser)
         if self.links > 0:
             self.links = "true"
         else:
             self.links = "false"
 
-    def extract_relevant_bigrams(self, parser):
+    def count_opinion_words(self, parser, pos_words, neg_words):
+        tagged_op_words = self.extract_relevant_op_words(parser)
+        pos = 1
+        self.opinion_score = 0
+        for word, tag in tagged_op_words:
+            word = word.lower()
+            if word in ["no", "not", "never", "ain't", "isn't", "aren't", "can't"]:
+                pos = -1
+                continue
+            if word in pos_words:
+                self.opinion_score += 1 * pos
+            elif word in neg_words:
+                self.opinion_score += -1 * pos
+            pos = 1
+
+    def extract_relevant_op_words(self, parser):
         if len(self.text.split()) == 0:
             return ""
 
         tags = parser.tag(self.text.split())
-        bigrams = ""
+        bigrams = []
         for index, (word, tag) in enumerate(tags):
             # The last word can't be the start of a bigram
             if index > len(tags) - 2:
@@ -69,24 +85,29 @@ class Tweet:
             next_word, next_tag = next_tuple
             if tag == "JJ":
                 if next_tag in ["NN", "NNS"]:
-                    bigrams += (word + " " + next_word)
+                    bigrams.append((word, tag))
+                    bigrams.append((next_word, next_tag))
                 if next_tag in ["JJ"] and index < len(tags) - 3:
                     next_next_word, next_next_tag = tags[index + 2]
                     if next_next_tag not in ["NN, NNS"]:
-                        bigrams += (word + " " + next_word)
+                        bigrams.append((word, tag))
+                        bigrams.append((next_word, next_tag))
 
             if tag in ["RB", "RBR", "RBS"]:
                 if next_tag in ["VB", "VBD", "VBN", "VBG"]:
-                    bigrams += (word + " " + next_word)
+                    bigrams.append((word, tag))
+                    bigrams.append((next_word, next_tag))
                 if next_tag == "JJ" and index < len(tags) - 3:
                     next_next_word, next_next_tag = tags[index + 2]
                     if next_next_tag not in ["NN, NNS"]:
-                        bigrams += (word + " " + next_word)
+                        bigrams.append((word, tag))
+                        bigrams.append((next_word, next_tag))
 
             if tag in ["NN", "NNS"]  and next_tag == "JJ" and index < len(tags) - 3:
                 next_next_word, next_next_tag = tags[index + 2]
                 if next_next_tag not in ["NN, NNS"]:
-                    bigrams += (word + " " + next_word)
+                    bigrams.append((word, tag))
+                    bigrams.append((next_word, next_tag))
         return bigrams
 
     def __str__(self):

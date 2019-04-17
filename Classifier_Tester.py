@@ -84,6 +84,31 @@ class Classifier_Tester:
 
         return Confusion_Matrix(true_pos, false_pos, false_neg, classification)
 
+    def balance_training_set(self, training_set):
+        cats = {u'-1': 0,
+                u'0': 0,
+                u'1': 0}
+
+        random.shuffle(training_set)
+
+        for tweet in training_set:
+            cat = tweet.category
+            cats[cat] = cats[cat] + 1
+
+        balance_num = min(cats.values())
+
+        ret_set = []
+        cats = {u'-1': 0,
+                u'0': 0,
+                u'1': 0,}
+
+        for tweet in training_set:
+            cat = tweet.category
+            cats[cat] = cats[cat] + 1
+            if cats[cat] <= balance_num:
+                ret_set.append(tweet)
+
+        return ret_set
 
     def run_test(self):
         accuracy = []
@@ -96,6 +121,8 @@ class Classifier_Tester:
             for j in range(self.n):
                 if i is not j:
                     training_set.extend(self.data_subset[j])
+
+            # training_set = self.balance_training_set(training_set)
             classifier = self.classifier(training_set, self.feature)
             classifier.classify(test_set)
             accuracy[i] = self.get_accuracy(test_set)

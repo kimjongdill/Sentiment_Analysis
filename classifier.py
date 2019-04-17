@@ -6,6 +6,7 @@ from sklearn.pipeline import Pipeline
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.cluster import KMeans
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.naive_bayes import MultinomialNB
 
 class Dummy_Classifier:
 
@@ -138,6 +139,106 @@ class SGD(Classifier):
         ])
 
         self.clf.fit(data, labels)
+
+def augment_with_opinion_words(record):
+    words = ""
+    if record.opinion_score == 0:
+        words = "opscoreneu"
+    if record.opinion_score < 0:
+        words = "opscoreneg"
+    if record.opinion_score > 0:
+        words = "opscorepos"
+    return words
+
+
+class Linear_SVM_w_Opinion_Words(Classifier):
+    name = "Linear SVM w Op Words"
+
+    def __init__(self, training_set, feature):
+        data = []
+        labels = []
+        self.feature = feature
+
+        for record in training_set:
+            words = augment_with_opinion_words(record)
+            r_data = getattr(record, feature)
+            r_data += words
+
+            data.append(r_data)
+            labels.append(int(record.category))
+
+        self.clf = Pipeline([
+            ('vect', CountVectorizer(lowercase=True, ngram_range=(1, 2))),
+            ('clf', LinearSVC()),
+        ])
+
+        self.clf.fit(data, labels)
+
+
+    def classify(self, test_set):
+        data = []
+        for record in test_set:
+            r_data = getattr(record, self.feature)
+            r_data += augment_with_opinion_words(record)
+            data.append(r_data)
+
+        predict = self.clf.predict(data)
+
+        for iter, val in enumerate(predict):
+            test_set[iter].classified = val
+
+class Naive_Bayes(Classifier):
+
+    name = "Naive Bayes"
+
+    def __init__(self, training_set, feature):
+        data = []
+        labels = []
+        self.feature = feature
+        for record in training_set:
+            data.append(getattr(record, feature))
+            labels.append(int(record.category))
+
+        self.clf = Pipeline([
+            ('vect', CountVectorizer(lowercase=True, ngram_range=(1, 2))),
+            ('tfidf', TfidfTransformer()),
+            ('clf', MultinomialNB()),
+        ])
+
+        self.clf.fit(data, labels)
+
+class Naive_Bayes_Op_Words(Classifier):
+
+    name = "Naive Bayes With Op Words"
+
+    def __init__(self, training_set, feature):
+        data = []
+        labels = []
+        self.feature = feature
+        for record in training_set:
+            r_data = getattr(record, feature)
+            r_data += augment_with_opinion_words(record)
+            data.append(r_data)
+            labels.append(int(record.category))
+
+        self.clf = Pipeline([
+            ('vect', CountVectorizer(lowercase=True, ngram_range=(1, 2))),
+            ('clf', MultinomialNB()),
+        ])
+
+        self.clf.fit(data, labels)
+
+    def classify(self, test_set):
+        data = []
+        for record in test_set:
+            r_data = getattr(record, self.feature)
+            r_data += augment_with_opinion_words(record)
+            data.append(r_data)
+
+        predict = self.clf.predict(data)
+
+        for iter, val in enumerate(predict):
+            test_set[iter].classified = val
 
 class Linear_SVM(Classifier):
 

@@ -6,10 +6,10 @@ from Classifier_Tester import Classifier_Tester
 import classifier
 import nltk
 
-def read_excel(input_file, parser):
+def read_excel(input_file, parser, pos_words, neg_words):
     tweets = []
     for index, row in input_file.iterrows():
-        tweets.append(Tweet(row, parser))
+        tweets.append(Tweet(row, parser, pos_words, neg_words))
     return tweets
 
 def strip_records_with_useless_labels(tweets):
@@ -31,26 +31,33 @@ if __name__ == "__main__":
     # Validate that Stanford Core NLP Server is Running
     parser = nltk.CoreNLPParser(url="http://localhost:9000", tagtype="pos")
 
+    # Positive and negative workd files from:
+    #
+    # Minqing Hu and Bing Liu.
+    # "Mining and Summarizing Customer Reviews." Proceedings of the ACM SIGKDD International Conference
+    #   on Knowledge Discovery and Data Mining(KDD - 2004), Aug 22 - 25, 2004, Seattle, Washington, USA,
+
+    pos_words = open("opinion-lexicon-English/positive-words.txt", 'r').readlines()
+    neg_words = open("opinion-lexicon-English/negative-words.txt", 'r').readlines()
+
+    for i, word in enumerate(pos_words):
+        pos_words[i] = word.replace('\r\n', '')
+
+    for i, word in enumerate(neg_words):
+        neg_words[i] = word.replace('\r\n', '')
 
     input_file_obama = pd.read_excel("training_data.xlsx", header=0, sheet_name="Obama", dtype=unicode)
     input_file_romney = pd.read_excel("training_data.xlsx", header=0, sheet_name="Romney", dtype=unicode)
-    tweets_obama = read_excel(input_file_obama, parser)
-    tweets_romney = read_excel(input_file_romney, parser)
+    tweets_obama = read_excel(input_file_obama, parser, pos_words, neg_words)
+    tweets_romney = read_excel(input_file_romney, parser, pos_words, neg_words)
 
     tweets_obama = strip_records_with_useless_labels(tweets_obama)
     tweets_romney = strip_records_with_useless_labels(tweets_romney)
-    tweets_all = []
-    tweets_all.extend(tweets_romney)
-    tweets_all.extend(tweets_obama)
-
-    for t in tweets_all:
-        t.trim_links()
-        # print(t.text)
 
 
-    classifiers = [classifier.Linear_SVM, classifier.Classifier, classifier.Random_Forest, classifier.SGD, classifier.DecisionTree]
+    classifiers = [classifier.Naive_Bayes, classifier.Naive_Bayes_Op_Words, classifier.Linear_SVM, classifier.Linear_SVM_w_Opinion_Words, classifier.Classifier, classifier.SGD]
     sets = [tweets_obama, tweets_romney]
-    features = ["text", "hashtags", "callout", "links", "bigrams"]
+    features = ["text", "hashtags", "callout", "links"] #, "bigrams"]
     results = []
 
     for classifier in classifiers:

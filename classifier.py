@@ -249,8 +249,15 @@ class Linear_SVM(Classifier):
         labels = []
         self.feature = feature
         for record in training_set:
-            data.append(getattr(record, feature))
-            labels.append(int(record.category))
+
+            try:
+                cat = int(record.category)
+                feat = getattr(record, feature)
+            except:
+                continue
+
+            data.append(feat)
+            labels.append(cat)
 
         self.clf = Pipeline([
             ('vect', CountVectorizer(lowercase=True, ngram_range=(1, 2))),

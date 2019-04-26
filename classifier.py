@@ -279,3 +279,74 @@ class SciKit_SVC(Classifier):
         ])
 
         self.clf.fit(data, labels)
+
+class Two_Step(Classifier):
+
+    name = "Two-Step Subjectivity then Polarity Classifier"
+
+    def __init__(self, training_set, feature):
+        data_pole = []
+        labels_pole = []
+
+        data_subj = []
+        labels_subj = []
+
+        self.feature = feature
+
+        # First Sort Data to Train Classifiers
+        for record in training_set:
+            # Data for subjectivity classifier
+            data_subj.append(getattr(record, feature))
+            labels_subj.append(record.subjective)
+
+            # Data for polarity classifier
+            if record.category != 0:
+                data_pole.append(getattr(record, feature))
+                labels_pole.append(int(record.category))
+
+        self.clf_subj = Pipeline([
+            ('vect', CountVectorizer(lowercase=True)),
+            ('tfidf', TfidfTransformer()),
+            ('clf', LinearSVC()),
+        ])
+
+        self.clf_pole = Pipeline([
+            ('vect', CountVectorizer(lowercase=True, ngram_range=(1, 2))),
+            ('tfidf', TfidfTransformer()),
+            ('clf', LinearSVC()),
+        ])
+
+        self.clf_subj.fit(data_subj, labels_subj)
+        self.clf_pole.fit(data_pole, labels_pole)
+
+    def classify(self, test_set):
+
+        for record in test_set:
+            # First test if subjective or objective
+            text = getattr(record, self.feature)
+            subj = self.clf_subj.predict([text])[0]
+
+            if subj:
+                pole = self.clf_pole.predict([getattr(record, self.feature)])[0]
+                record.classified = pole
+            else:
+                record.classified = 0
+
+            # print "act: " + str(record.category) + " class:" + str(subj) + " Obj Score:" + str(record.opinion_score) + " class:" + str(record.classified)
+
+class Opinion_Word_Count(Classifier):
+
+    name = "Count Opinion Words"
+
+    def __init__(self, training_set, feature):
+        self.feature = ""
+
+    def classify(self, test_set):
+
+        for record in test_set:
+            if record.opinion_score < 0:
+                record.classified = -1
+            elif record.opinion_score > 0:
+                record.classified = 1
+            else:
+                record.classified = 0

@@ -6,11 +6,12 @@ from Classifier_Tester import Classifier_Tester
 import classifier
 import nltk
 
-def read_excel(input_file, parser, pos_words, neg_words):
+def read_excel(input_file, pos_words, neg_words):
     tweets = []
     for index, row in input_file.iterrows():
-        tweets.append(Tweet(row, parser, pos_words, neg_words))
+        tweets.append(Tweet(row, pos_words, neg_words))
     return tweets
+
 
 def strip_records_with_useless_labels(tweets):
     clean_tweets = []
@@ -31,7 +32,7 @@ if __name__ == "__main__":
     # Validate that Stanford Core NLP Server is Running
     parser = nltk.CoreNLPParser(url="http://localhost:9000", tagtype="pos")
 
-    # Positive and negative workd files from:
+    # Positive and negative word lexicon from:
     #
     # Minqing Hu and Bing Liu.
     # "Mining and Summarizing Customer Reviews." Proceedings of the ACM SIGKDD International Conference
@@ -48,14 +49,15 @@ if __name__ == "__main__":
 
     input_file_obama = pd.read_excel("training_data.xlsx", header=0, sheet_name="Obama", dtype=unicode)
     input_file_romney = pd.read_excel("training_data.xlsx", header=0, sheet_name="Romney", dtype=unicode)
-    tweets_obama = read_excel(input_file_obama, parser, pos_words, neg_words)
-    tweets_romney = read_excel(input_file_romney, parser, pos_words, neg_words)
+
+    tweets_obama = read_excel(input_file_obama, pos_words, neg_words)
+    tweets_romney = read_excel(input_file_romney, pos_words, neg_words)
 
     tweets_obama = strip_records_with_useless_labels(tweets_obama)
     tweets_romney = strip_records_with_useless_labels(tweets_romney)
 
 
-    classifiers = [classifier.Naive_Bayes, classifier.Naive_Bayes_Op_Words, classifier.Linear_SVM, classifier.Linear_SVM_w_Opinion_Words, classifier.Classifier, classifier.SGD]
+    classifiers = [classifier.Opinion_Word_Count, classifier.Two_Step, classifier.Naive_Bayes, classifier.Naive_Bayes_Op_Words, classifier.Linear_SVM, classifier.Linear_SVM_w_Opinion_Words, classifier.Classifier, classifier.SGD]
     sets = [tweets_obama, tweets_romney]
     features = ["text", "hashtags", "callout", "links"] #, "bigrams"]
     results = []

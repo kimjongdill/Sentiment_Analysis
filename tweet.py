@@ -2,7 +2,13 @@ import nltk
 import pandas as pd
 import re
 from datetime import datetime, date, time
+from bisect import bisect_left
 
+def find(word, list):
+    i = bisect_left(list, word)
+    if i != len(list) and list[i] == word:
+        return True
+    return False
 
 class Tweet:
 
@@ -11,18 +17,18 @@ class Tweet:
              return u""
         return var
 
-    def __init__(self, line, parser, pos_words, neg_words):
+    def __init__(self, line, pos_words, neg_words):
         # print(line)
         self.text = self.type_check(line['text'])
         self.date = self.type_check(line['date'])
         self.time = self.type_check(line['time'])
         self.category = self.type_check(line['class'])
-
         # Gather features on the tweet
         self.hashtags = ""
         self.callout = ""
         self.links = 0
         self.trim_tags()
+        self.opinion_count = 0
         text = self.text.split()
 
         # Store the hashtags, callout, and count links
@@ -49,27 +55,38 @@ class Tweet:
         self.text = self.text.replace("@", "")
         self.text = self.text.replace("#", "")
 
-        self.count_opinion_words(parser, pos_words, neg_words)
+        self.count_opinion_words(pos_words, neg_words)
+        self.subjective = True if self.opinion_count >= 1 else False
+
+        # try:
+        #     self.subjective = False if int(self.category) == 0 else True
+        # except:
+        #     self.subjective = False
+
         #self.bigrams = self.extract_relevant_bigrams(parser)
         if self.links > 0:
             self.links = "true"
         else:
             self.links = "false"
 
-    def count_opinion_words(self, parser, pos_words, neg_words):
-        tagged_op_words = self.extract_relevant_op_words(parser)
+    def count_opinion_words(self, pos_words, neg_words):
+        #tagged_op_words = self.extract_relevant_op_words(parser)
         pos = 1
         self.opinion_score = 0
-        for word, tag in tagged_op_words:
-            word = word.lower()
-            if word in ["no", "not", "never", "ain't", "isn't", "aren't", "can't"]:
-                pos = -1
+        tokenizer = nltk.RegexpTokenizer(r'\w+')
+
+        for word in tokenizer.tokenize(self.text):
+            try:
+                word = word.lower()
+                if find(word, pos_words):
+                    self.opinion_score += 1
+                    self.opinion_count += 1
+                if find(word, neg_words):
+                    self.opinion_score -= 1
+                    self.opinion_count += 1
+            except:
                 continue
-            if word in pos_words:
-                self.opinion_score += 1 * pos
-            elif word in neg_words:
-                self.opinion_score += -1 * pos
-            pos = 1
+
 
     def extract_relevant_op_words(self, parser):
         if len(self.text.split()) == 0:

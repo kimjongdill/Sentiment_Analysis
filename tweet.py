@@ -19,7 +19,7 @@ class Tweet:
 
     def __init__(self, line, training=True):
         # print(line)
-        self.text = str(line['Tweet_Text'])      #self.type_check(line['Tweet_Text'])
+        self.text = (str(line['Tweet_text'])).decode("utf-8", "ignore")      #self.type_check(line['Tweet_Text'])
         self.id = line['Tweet_ID']          #self.type_check(line['Tweet_ID'])
         # self.time = self.type_check(line['time'])
         # Only training tweets will have a class label in the constructor

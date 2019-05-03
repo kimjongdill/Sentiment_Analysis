@@ -27,7 +27,7 @@ if __name__ == "__main__":
 
     # Read in the Training Data
 
-    training_set = pd.read_csv(training_file, header=0, dtype=unicode)
+    training_set = pd.read_csv(training_file, header=0)
 
     # Convert File to class Tweet
     training_tweets = []
@@ -41,7 +41,7 @@ if __name__ == "__main__":
 
     # Read the test data
     try:
-        test_set = pd.read_csv(filename, header=0, dtype=unicode)
+        test_set = pd.read_csv(filename, header=0)
 
     except:
         print("Could not open file: " + filename + " Sheet: " + sheetname)

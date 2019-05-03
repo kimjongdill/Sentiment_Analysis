@@ -17,12 +17,15 @@ class Tweet:
              return u""
         return var
 
-    def __init__(self, line, pos_words, neg_words):
+    def __init__(self, line, training=True):
         # print(line)
-        self.text = self.type_check(line['text'])
-        self.date = self.type_check(line['date'])
-        self.time = self.type_check(line['time'])
-        self.category = self.type_check(line['class'])
+        self.text = str(line['Tweet_Text'])      #self.type_check(line['Tweet_Text'])
+        self.id = line['Tweet_ID']          #self.type_check(line['Tweet_ID'])
+        # self.time = self.type_check(line['time'])
+        # Only training tweets will have a class label in the constructor
+        if training == True:
+            self.category = line['class']   # self.type_check(line['class'])
+
         # Gather features on the tweet
         self.hashtags = ""
         self.callout = ""
@@ -55,8 +58,8 @@ class Tweet:
         self.text = self.text.replace("@", "")
         self.text = self.text.replace("#", "")
 
-        self.count_opinion_words(pos_words, neg_words)
-        self.subjective = True if self.opinion_count >= 1 else False
+        # self.count_opinion_words(pos_words, neg_words)
+        # self.subjective = True if self.opinion_count >= 1 else False
 
         # try:
         #     self.subjective = False if int(self.category) == 0 else True
